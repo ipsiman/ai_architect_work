@@ -6,13 +6,14 @@
 
 ### TechnoMart: сервис персональных рекомендаций для ритейлера
 
-Спроектирован AI-сервис рекомендаций и data-платформа под него: стратегия внедрения, пайплайны, озеро данных, feature store, security layer, observability и поставка (CI/CD, MLOps).
+Спроектирован AI-сервис рекомендаций и data-платформа под него: стратегия внедрения, пайплайны, озеро данных, feature store, security layer, observability, поставка (CI/CD, MLOps) и high-load-масштабирование (кэши, KEDA, async).
 
 - [01_Roadmap_AI_Strategy](01_Roadmap_AI_Strategy/README.md) - уточняющие вопросы заказчику, выбор контрактной модели (T&M с капом на PoC, гибрид Fixed Price + T&M для MVP), матрица AI-рисков, roadmap PoC >> MVP >> Production с DoD
 - [02_Model_C4](02_Model_C4/README.md) - архитектура сервиса по C4 Model (контейнеры, компоненты, sequence) и OpenAPI-контракт `POST /get_recommendation`
 - [05_Data_Pipelines](05_Data_Pipelines/README.md) - data pipeline от источников до feature store, выбор хранилищ
 - [06_Observability](06_Observability/README.md) - security layer (PII-санитизация, guardrails), RAG-метрики как release gates, observability с AI-метриками на Grafana-дашборде ([мокап](06_Observability/dashboard_mockup.png))
 - [08_CICD_MLOps_Production](08_CICD_MLOps_Production/README.md) - поставка AI-сервиса: IaC (Terraform), CI/CD (GitHub Actions + Argo CD), MLOps-конвейер обучения (Airflow + MLflow), canary-релизы с авто-откатом
+- [09_HighLoad_LowLatency_arch](09_HighLoad_LowLatency_arch/README.md) - масштабирование до 10 000 RPS при latency < 200 мс: каскад кэшей L0–L3 (CDN → gateway → Redis → Semantic Cache), KEDA-автоскейлинг vLLM-пулов, async-обработка тяжёлых запросов через Kafka, опционально Geo-DNS и edge
 
 ### Trip Assistant: умный помощник командировок
 
@@ -39,6 +40,7 @@
 | [Security, Testing & Observability](06_Observability/README.md) | Контур качества генеративного сценария: защита от утечек PII и prompt injection, RAG-метрики как гейты релиза, дашборд golden signals + AI-метрики (токены, стоимость запроса) | Presidio, NeMo Guardrails, Ragas, DeepEval, Langfuse, Prometheus + Grafana, Loki, Tempo, Vault |
 | [Sizing прод-контура Llama-3-70B](07_Price_Resource_Sizing/README.md) | VRAM и GPU под 1000 RPM (веса + KV-кэш, roofline-модель), цены Yandex Cloud vs Cloud.ru, экономия от батчинга и vLLM, рекомендация прод-конфигурации | Roofline-модель, vLLM, AWQ INT4, Excel/Google Sheets |
 | [IaC, CI/CD и MLOps-конвейеры](08_CICD_MLOps_Production/README.md) | Два независимых релизных цикла (код и модель), интеграция артефактов через release-PR (image + modelVersion), canary-релиз с авто-анализом и авто-откатом, 0–1 ручных шагов | Terraform, GitHub Actions, Argo CD/Rollouts, Airflow, MLflow |
+| [High-Load и Low-Latency архитектура](09_HighLoad_LowLatency_arch/README.md) | Архитектура под 10 000 RPS и p95 < 200 мс: декомпозиция трафика на классы, каскад кэшей с Semantic Cache, KEDA-масштабирование vLLM, async через Kafka, burst-playbook на всплеск x3 | Redis + RediSearch VSS, KEDA, Kafka, vLLM, Geo-DNS/CDN |
 
 ## Темы
 
@@ -51,6 +53,7 @@
 - Безопасность: закрытый контур, 152-ФЗ, обезличивание PII, guardrails, защита от prompt injection
 - Качество и наблюдаемость: RAG-метрики как release gates (Faithfulness, Answer Relevancy), golden signals и SLO, Grafana-дашборд с AI-метриками
 - Поставка: IaC (Terraform), GitOps (Argo CD), CI/CD-гейты, связка кода и модели через Model Registry, canary-релизы и авто-откат
+- High-load и low-latency: декомпозиция неоднородного трафика, каскад кэшей (Semantic Cache), prefix caching, KEDA по метрикам движка и Kafka lag, queue-based load leveling
 
 ## Структура репозитория
 
@@ -78,7 +81,9 @@
 ├── 07_Price_Resource_Sizing/  # Sizing: VRAM, GPU и стоимость Llama-3-70B
 │   ├── README.md
 │   └── Sizing_Llama3-70B.xlsx
-└── 08_CICD_MLOps_Production/  # TechnoMart: поставка AI-сервиса (IaC, CI/CD, MLOps)
+├── 08_CICD_MLOps_Production/  # TechnoMart: поставка AI-сервиса (IaC, CI/CD, MLOps)
+│   └── README.md
+└── 09_HighLoad_LowLatency_arch/  # TechnoMart: high-load — кэш-каскад, KEDA, async
     └── README.md
 ```
 

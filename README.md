@@ -1,6 +1,6 @@
 # Проектирование AI-систем: мини-проекты
 
-Серия мини-проектов по проектированию AI-систем: от постановки задачи и архитектуры до данных и обоснования решения. Выполнены в рамках программы курса [«ИИ-архитектор» (OTUS)](https://otus.ru/lessons/ai-architect/).
+Серия мини-проектов по проектированию AI-систем: от постановки задачи и архитектуры до данных, обоснования решений и рабочего прототипа (финальный проект). Выполнены в рамках программы курса [«ИИ-архитектор» (OTUS)](https://otus.ru/lessons/ai-architect/).
 
 ## Кейсы
 
@@ -29,6 +29,12 @@
 
 - [07_Price_Resource_Sizing](07_Price_Resource_Sizing/README.md) - sizing и стоимость прод-контура Llama-3-70B: FP16 140 ГБ / INT4 35 ГБ, рекомендация 5×A100-80 с vLLM + AWQ INT4, ~1,2–1,7 млн ₽/мес ([Excel-модель](07_Price_Resource_Sizing/Sizing_Llama3-70B.xlsx) с живыми формулами)
 
+### SecureKB: защищённая RAG-платформа корпоративных знаний (финальный проект)
+
+Рабочий прототип, а не только дизайн-документы: гибридный поиск по корпоративной базе с контролем доступа на каждом уровне, локальная LLM в закрытом контуре и полная наблюдаемость.
+
+- [11_SecureKB_GraphRAG](11_SecureKB_GraphRAG/README.md) - рабочая RAG-платформа: гибридный поиск Qdrant (dense) + BM25 со слиянием RRF, графовое расширение GraphRAG-lite (SQLite), локальная LLM Qwen2.5-1.5B (llama.cpp), guardrails (prompt injection, PII-санитизация), RBAC public / internal / secret, SSE-стриминг, observability (OTel / Prometheus / Grafana / Jaeger); 129 тестов, golden Q/A гейт ≥ 0.70 (факт 0.87), 6 ADR, бэкап/восстановление
+
 ## Проекты
 
 | Проект | О чём | Стек |
@@ -43,6 +49,7 @@
 | [IaC, CI/CD и MLOps-конвейеры](08_CICD_MLOps_Production/README.md) | Два независимых релизных цикла (код и модель), интеграция артефактов через release-PR (image + modelVersion), canary-релиз с авто-анализом и авто-откатом, 0–1 ручных шагов | Terraform, GitHub Actions, Argo CD/Rollouts, Airflow, MLflow |
 | [High-Load и Low-Latency архитектура](09_HighLoad_LowLatency_arch/README.md) | Архитектура под 10 000 RPS и p95 < 200 мс: декомпозиция трафика на классы, каскад кэшей с Semantic Cache, KEDA-масштабирование vLLM, async через Kafka, burst-playbook на всплеск x3 | Redis + RediSearch VSS, KEDA, Kafka, vLLM, Geo-DNS/CDN |
 | [FinOps и Governance](10_FinOps_and_Governance/README.md) | Model Card двух моделей по Mitchell et al. (bias-анализ, fairness-метрики рекомендаций, митигация до/во время/после), governance-контур 4 уровней с decision audit log; разбор перерасхода +50% по статьям и двухволновой план оптимизации до −32% бюджета | Model Cards, Fairness, FinOps, Preemptible/Spot, Model Distillation, Lifecycle/TTL |
+| [SecureKB: защищённая GraphRAG-платформа](11_SecureKB_GraphRAG/README.md) | Финальный проект — рабочий прототип RAG-платформы: гибридный поиск dense + BM25 со слиянием RRF, графовое расширение GraphRAG-lite, локальная LLM Qwen2.5-1.5B в закрытом контуре, guardrails (prompt injection, PII), RBAC public / internal / secret, SSE-стриминг, observability и бэкап/восстановление; 129 тестов, golden Q/A гейт (0.87), 6 ADR | LangGraph, Qdrant, BM25 + RRF, llama.cpp, RBAC, Guardrails, OTel |
 
 ## Темы
 
@@ -57,6 +64,7 @@
 - Поставка: IaC (Terraform), GitOps (Argo CD), CI/CD-гейты, связка кода и модели через Model Registry, canary-релизы и авто-откат
 - High-load и low-latency: декомпозиция неоднородного трафика, каскад кэшей (Semantic Cache), prefix caching, KEDA по метрикам движка и Kafka lag, queue-based load leveling
 - FinOps и governance: Model Cards, fairness-метрики рекомендаций (паритет CTR/HitRate, catalog coverage), decision audit log, unit-экономика облака (Cost per Request), дистилляция 70B→8B, preemptible-инстансы, lifecycle/TTL данных
+- RAG-платформа в закрытом контуре (финальный проект): гибридный поиск (dense + BM25, слияние RRF), GraphRAG-lite, локальный инференс LLM (llama.cpp, GGUF), guardrails и RBAC на пути запроса, SSE-стриминг, OTel-трейсинг по узлам query graph
 
 ## Структура репозитория
 
@@ -88,7 +96,13 @@
 │   └── README.md
 ├── 09_HighLoad_LowLatency_arch/  # TechnoMart: high-load — кэш-каскад, KEDA, async
 │   └── README.md
-└── 10_FinOps_and_Governance/  # TechnoMart: FinOps и governance — Model Card, cost optimization
-    └── README.md
+├── 10_FinOps_and_Governance/  # TechnoMart: FinOps и governance — Model Card, cost optimization
+│   └── README.md
+└── 11_SecureKB_GraphRAG/    # SecureKB: финальный проект — рабочая RAG-платформа
+    ├── README.md
+    ├── backend/             # FastAPI + LangGraph, 129 тестов (pytest)
+    ├── docs/                # мастер-план, архитектура, TCO, 6 ADR
+    ├── infra/               # docker-compose: qdrant, prometheus, grafana, jaeger
+    └── scripts/             # ингест, quality gate, нагрузочный тест, demo
 ```
 

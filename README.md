@@ -1,6 +1,7 @@
 # Проектирование AI-систем: мини-проекты
 
-Серия мини-проектов по проектированию AI-систем: от постановки задачи и архитектуры до данных, обоснования решений и рабочего прототипа (финальный проект). Выполнены в рамках программы курса [«ИИ-архитектор» (OTUS)](https://otus.ru/lessons/ai-architect/).
+Серия мини-проектов по проектированию AI-систем: от постановки задачи и архитектуры до данных, 
+обоснования решений и рабочего прототипа.
 
 ## Кейсы
 
@@ -29,7 +30,7 @@
 
 - [07_Price_Resource_Sizing](07_Price_Resource_Sizing/README.md) - sizing и стоимость прод-контура Llama-3-70B: FP16 140 ГБ / INT4 35 ГБ, рекомендация 5×A100-80 с vLLM + AWQ INT4, ~1,2–1,7 млн ₽/мес ([Excel-модель](07_Price_Resource_Sizing/Sizing_Llama3-70B.xlsx) с живыми формулами)
 
-### SecureKB: защищённая RAG-платформа корпоративных знаний (финальный проект)
+### SecureKB: защищённая RAG-платформа корпоративных знаний
 
 Рабочий прототип, а не только дизайн-документы: гибридный поиск по корпоративной базе с контролем доступа на каждом уровне, локальная LLM в закрытом контуре и полная наблюдаемость.
 
@@ -98,11 +99,10 @@
 │   └── README.md
 ├── 10_FinOps_and_Governance/  # TechnoMart: FinOps и governance — Model Card, cost optimization
 │   └── README.md
-└── 11_SecureKB_GraphRAG/    # SecureKB: финальный проект — рабочая RAG-платформа
+└── 11_SecureKB_GraphRAG/    # SecureKB — рабочая RAG-платформа
     ├── README.md
     ├── backend/             # FastAPI + LangGraph, 129 тестов (pytest)
     ├── docs/                # мастер-план, архитектура, TCO, 6 ADR
     ├── infra/               # docker-compose: qdrant, prometheus, grafana, jaeger
     └── scripts/             # ингест, quality gate, нагрузочный тест, demo
 ```
-

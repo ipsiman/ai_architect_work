@@ -1,0 +1,113 @@
+[
+  {
+    "question": "Какой бюджет у проекта «Феникс»?",
+    "expected_doc_id": "DOC-0086",
+    "expected_acl": "secret",
+    "key_fact_substring": "240"
+  },
+  {
+    "question": "Какова оценка целевой компании ООО «Гранит-Холдинг»?",
+    "expected_doc_id": "DOC-0087",
+    "expected_acl": "secret",
+    "key_fact_substring": "1,85"
+  },
+  {
+    "question": "Каков размер премиального пула для ключевых участников проекта «Феникс»?",
+    "expected_doc_id": "DOC-0088",
+    "expected_acl": "secret",
+    "key_fact_substring": "18 млн"
+  },
+  {
+    "question": "Каков размер единовременной ретенции для топ-менеджмента при закрытии сделки по проекту «Феникс»?",
+    "expected_doc_id": "DOC-0089",
+    "expected_acl": "secret",
+    "key_fact_substring": "4,5"
+  },
+  {
+    "question": "Какова комиссия консультанта по сделке «Феникс»?",
+    "expected_doc_id": "DOC-0090",
+    "expected_acl": "secret",
+    "key_fact_substring": "2,4"
+  },
+  {
+    "question": "Какая итоговая скидка по трёхлетнему контракту с АО «Северный Логистик»?",
+    "expected_doc_id": "DOC-0091",
+    "expected_acl": "secret",
+    "key_fact_substring": "27"
+  },
+  {
+    "question": "Какова ставка факторинга по закрытому соглашению с банком «Трест-Инвест»?",
+    "expected_doc_id": "DOC-0092",
+    "expected_acl": "secret",
+    "key_fact_substring": "14,8"
+  },
+  {
+    "question": "Какова залоговая стоимость пакета акций ООО «Рифей-Актив»?",
+    "expected_doc_id": "DOC-0093",
+    "expected_acl": "secret",
+    "key_fact_substring": "640"
+  },
+  {
+    "question": "Какова себестоимость пилотной партии изделий по закрытой НИОКР-теме?",
+    "expected_doc_id": "DOC-0094",
+    "expected_acl": "secret",
+    "key_fact_substring": "128"
+  },
+  {
+    "question": "Сколько позиций составляет кадровый резерв на сокращение по проекту «Феникс»?",
+    "expected_doc_id": "DOC-0097",
+    "expected_acl": "secret",
+    "key_fact_substring": "74"
+  },
+  {
+    "question": "Каков фактический перерасход бюджета проекта «Сигма»?",
+    "expected_doc_id": "DOC-0099",
+    "expected_acl": "secret",
+    "key_fact_substring": "23,6"
+  },
+  {
+    "question": "Какой процент успешно пройденных автотестов по проекту «Вектор»?",
+    "expected_doc_id": "DOC-0077",
+    "expected_acl": "internal",
+    "key_fact_substring": "78"
+  },
+  {
+    "question": "Какой процент успешно пройденных автотестов по проекту «Феникс»?",
+    "expected_doc_id": "DOC-0062",
+    "expected_acl": "internal",
+    "key_fact_substring": "91"
+  },
+  {
+    "question": "За сколько рабочих дней до выезда оформляется командировка сотрудника отдела НИОКР?",
+    "expected_doc_id": "DOC-0028",
+    "expected_acl": "public",
+    "key_fact_substring": "пять рабочих дней"
+  },
+  {
+    "question": "Представитель какого отдела входит в закупочную комиссию по регламенту согласования закупок для отдела Юридический?",
+    "expected_doc_id": "DOC-0009",
+    "expected_acl": "public",
+    "key_fact_substring": "Юридический"
+  },
+  {
+    "question": "Что выплатят ключевым людям при завершении «Феникс»?",
+    "expected_doc_id": "DOC-0088",
+    "expected_acl": "secret",
+    "key_fact_substring": "18 млн",
+    "note": "entity-bridge (этап D): лексики вопроса нет в документе — DOC-0088 попадает в top-5 только через graph-expand по сущности «Феникс»"
+  },
+  {
+    "question": "Кто подписывает соглашение о слиянии по проекту «Феникс»?",
+    "expected_doc_id": "DOC-0086",
+    "expected_acl": "secret",
+    "key_fact_substring": "Иванов",
+    "note": "entity-bridge (этап D): вопрос через сущность «Феникс» связывает документы сделки"
+  },
+  {
+    "question": "Кто выступает поручителем по соглашению с банком «Трест-Инвест»?",
+    "expected_doc_id": "DOC-0092",
+    "expected_acl": "secret",
+    "key_fact_substring": "Новиков",
+    "note": "entity-bridge (этап D): сделка «Трест-Инвест» связывает документы по со-встречаемости сущностей"
+  }
+]

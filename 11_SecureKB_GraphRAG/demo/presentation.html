@@ -1,0 +1,582 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SecureKB · Защищённая база корпоративных знаний — финальный проект «ИИ-Архитектор»</title>
+<style>
+  :root{
+    --bg:#070b16; --bg2:#0b1224; --panel:#0f1830; --panel2:#131e3c;
+    --line:rgba(148,163,255,.14); --line2:rgba(148,163,255,.28);
+    --txt:#e8edfb; --mut:#9aa5c6; --dim:#7b87a8;
+    --acc:#5eead4; --acc2:#38bdf8; --vio:#a78bfa; --warn:#fbbf24; --bad:#fb7185; --ok:#4ade80;
+    --grad:linear-gradient(90deg,#5eead4,#38bdf8 55%,#a78bfa);
+    --mono:"SF Mono","JetBrains Mono","Fira Code",ui-monospace,Menlo,Consolas,monospace;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  html,body{height:100%}
+  body{background:var(--bg);color:var(--txt);font-family:-apple-system,BlinkMacSystemFont,"Inter","Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;overflow:hidden;-webkit-font-smoothing:antialiased}
+  body::before{content:"";position:fixed;inset:0;pointer-events:none;z-index:0;
+    background:
+      radial-gradient(60vw 60vh at 85% -10%,rgba(56,189,248,.10),transparent 60%),
+      radial-gradient(50vw 50vh at -10% 110%,rgba(167,139,250,.10),transparent 60%),
+      radial-gradient(40vw 40vh at 50% 50%,rgba(94,234,212,.04),transparent 70%);}
+  body::after{content:"";position:fixed;inset:0;pointer-events:none;z-index:1;opacity:.35;
+    background-image:linear-gradient(rgba(148,163,255,.05) 1px,transparent 1px),linear-gradient(90deg,rgba(148,163,255,.05) 1px,transparent 1px);
+    background-size:44px 44px;mask-image:radial-gradient(80vw 80vh at 50% 50%,#000 30%,transparent 100%);}
+
+  #progress{position:fixed;top:0;left:0;height:3px;width:0;background:var(--grad);z-index:60;transition:width .45s cubic-bezier(.22,1,.36,1);box-shadow:0 0 12px rgba(56,189,248,.7)}
+  .deck{position:fixed;inset:0;z-index:2}
+  .slide{position:absolute;inset:0;display:flex;flex-direction:column;justify-content:center;
+    padding:6.2vh 7vw 10.5vh;opacity:0;visibility:hidden;transform:translateY(26px) scale(.985);
+    transition:opacity .5s ease,transform .5s cubic-bezier(.22,1,.36,1),visibility 0s .5s}
+  .slide.active{opacity:1;visibility:visible;transform:none;transition:opacity .5s ease,transform .5s cubic-bezier(.22,1,.36,1)}
+  .slide.prev{transform:translateY(-26px) scale(.985)}
+  .slide.tight{padding-bottom:13vh}
+
+  .kicker{font-family:var(--mono);font-size:clamp(9px,.82vw,14px);letter-spacing:.28em;text-transform:uppercase;color:var(--acc);margin-bottom:1.6vh;display:flex;align-items:center;gap:.7vw}
+  .kicker::before{content:"";width:2.2vw;height:2px;background:var(--grad);border-radius:2px}
+  h1{font-size:clamp(38px,5.6vw,96px);line-height:1.04;font-weight:800;letter-spacing:-.02em}
+  h1 .grad{background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}
+  h2{font-size:clamp(24px,3.1vw,58px);line-height:1.1;font-weight:750;letter-spacing:-.015em;margin-bottom:2.8vh}
+  h2 .dim{color:var(--dim)}
+  .sub{font-size:clamp(14px,1.35vw,26px);color:var(--mut);line-height:1.55;max-width:46vw}
+  .lead{font-size:clamp(15px,1.5vw,28px);line-height:1.5;color:var(--txt);max-width:52vw}
+
+  .grid{display:grid;gap:1.1vw}
+  .g2{grid-template-columns:1fr 1fr}.g3{grid-template-columns:repeat(3,1fr)}.g4{grid-template-columns:repeat(4,1fr)}
+  .card{background:linear-gradient(180deg,var(--panel),var(--bg2));border:1px solid var(--line);border-radius:1vw;padding:1.5vw 1.5vw 1.75vw;position:relative;overflow:hidden}
+  .card::before{content:"";position:absolute;top:0;left:0;right:0;height:2px;background:var(--grad);opacity:0;transition:.3s}
+  .card:hover{border-color:var(--line2);transform:translateY(-3px);transition:.3s}
+  .card:hover::before{opacity:1}
+  .card h3{font-size:clamp(12.5px,1.12vw,20px);font-weight:700;margin-bottom:.7vh;display:flex;align-items:center;gap:.55vw}
+  .card p{font-size:clamp(12px,.92vw,18px);color:var(--mut);line-height:1.55}
+  .num{font-family:var(--mono);font-size:clamp(20px,2.5vw,48px);font-weight:700;background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent;line-height:1.1}
+  .numlab{font-size:clamp(9.5px,.85vw,13px);color:var(--dim);margin-top:.4vh;font-family:var(--mono);letter-spacing:.06em;text-transform:uppercase}
+  .tag{display:inline-flex;align-items:center;gap:.4vw;font-family:var(--mono);font-size:clamp(9.5px,.72vw,12px);letter-spacing:.08em;padding:.32vw .75vw;border-radius:99px;border:1px solid var(--line2);color:var(--mut);text-transform:uppercase}
+  .tag.ok{color:var(--ok);border-color:rgba(74,222,128,.35);background:rgba(74,222,128,.07)}
+  .tag.warn{color:var(--warn);border-color:rgba(251,191,36,.35);background:rgba(251,191,36,.07)}
+  .tag.bad{color:var(--bad);border-color:rgba(251,113,133,.35);background:rgba(251,113,133,.07)}
+  .tag.acc{color:var(--acc2);border-color:rgba(56,189,248,.4);background:rgba(56,189,248,.08)}
+  .dot{width:.55vw;height:.55vw;border-radius:50%;background:var(--acc);flex:none;box-shadow:0 0 10px rgba(94,234,212,.8)}
+  .dot.b{background:var(--acc2);box-shadow:0 0 10px rgba(56,189,248,.8)}
+  .dot.v{background:var(--vio);box-shadow:0 0 10px rgba(167,139,250,.8)}
+
+  .term{background:#0a0f1e;border:1px solid var(--line2);border-radius:.9vw;overflow:hidden;box-shadow:0 18px 50px rgba(0,0,0,.5)}
+  .term-bar{display:flex;align-items:center;gap:.5vw;padding:.7vw 1vw;background:#0d142a;border-bottom:1px solid var(--line)}
+  .term-bar i{width:.62vw;height:.62vw;border-radius:50%;background:#27324f}
+  .term-bar i:nth-child(1){background:#fb7185}.term-bar i:nth-child(2){background:#fbbf24}.term-bar i:nth-child(3){background:#4ade80}
+  .term-bar span{font-family:var(--mono);font-size:.72vw;color:var(--dim);margin-left:.6vw}
+  .term pre{padding:1.1vw 1.3vw;font-family:var(--mono);font-size:clamp(12px,.95vw,18px);line-height:1.75;overflow:hidden}
+  .c-p{color:#7dd3fc}.c-a{color:#5eead4}.c-y{color:#fbbf24}.c-r{color:#fb7185}.c-g{color:#4ade80}.c-v{color:#a78bfa}.c-m{color:#8b96b8}.c-d{color:#6a78a3}
+  .pr{color:var(--acc)} .ans{color:#fff;font-weight:600}
+
+  table{width:100%;border-collapse:collapse;font-size:clamp(12px,.95vw,18px)}
+  th{font-family:var(--mono);font-size:clamp(9px,.72vw,13px);letter-spacing:.12em;text-transform:uppercase;color:var(--dim);text-align:left;padding:.55vw .8vw;border-bottom:1px solid var(--line2)}
+  td{padding:.68vw .8vw;border-bottom:1px solid var(--line);color:var(--txt);line-height:1.4}
+  td.mut{color:var(--mut)} td.mono{font-family:var(--mono);font-size:clamp(10.5px,.86vw,16px)}
+
+  .arch{display:flex;align-items:stretch;gap:1vw}
+  .arch .lane{flex:1;display:flex;flex-direction:column;gap:.8vw}
+  .node{background:linear-gradient(180deg,var(--panel2),var(--panel));border:1px solid var(--line2);border-radius:.8vw;padding:.95vw 1.1vw;text-align:center}
+  .node b{font-size:clamp(12px,1vw,18px);display:block}
+  .node span{font-family:var(--mono);font-size:clamp(9.5px,.72vw,13px);color:var(--mut)}
+  .node.hl{border-color:rgba(94,234,212,.5);box-shadow:0 0 30px rgba(94,234,212,.12)}
+  .node.hl2{border-color:rgba(56,189,248,.5);box-shadow:0 0 30px rgba(56,189,248,.12)}
+  .node.sec{border-color:rgba(251,113,133,.45);box-shadow:0 0 26px rgba(251,113,133,.10)}
+  .flow{display:flex;align-items:center;color:var(--dim);font-family:var(--mono);font-size:1.4vw;justify-content:center}
+
+  .tl{display:grid;grid-template-columns:repeat(5,1fr);gap:1vw;position:relative}
+  .tl::before{content:"";position:absolute;top:1.05vw;left:2%;right:2%;height:2px;background:linear-gradient(90deg,var(--acc),var(--acc2),var(--vio),var(--line));border-radius:2px}
+  .tl .ph{position:relative;padding-top:2.4vw}
+  .tl .ph::before{content:"";position:absolute;top:.55vw;left:0;width:1.05vw;height:1.05vw;border-radius:50%;background:var(--bg);border:3px solid var(--acc2)}
+  .tl .ph.done::before{background:var(--acc);border-color:var(--acc);box-shadow:0 0 14px rgba(94,234,212,.8)}
+  .tl b{font-size:clamp(12px,1vw,18px);display:block;margin-bottom:.3vh}
+  .tl span{font-size:clamp(10.5px,.78vw,15px);color:var(--mut);line-height:1.45;display:block}
+
+  .footer{position:fixed;left:7vw;right:7vw;bottom:3.4vh;display:flex;justify-content:space-between;align-items:center;z-index:50;font-family:var(--mono);font-size:clamp(9.5px,.78vw,12px);color:var(--dim)}
+  .footer .brand{display:flex;align-items:center;gap:.6vw}
+  .footer .brand em{width:.5vw;height:.5vw;border-radius:2px;background:var(--grad);display:inline-block}
+  .dots{position:fixed;right:2vw;top:50%;transform:translateY(-50%);display:flex;flex-direction:column;gap:.55vw;z-index:55}
+  .dots i{width:.5vw;height:.5vw;border-radius:50%;background:#232e4f;cursor:pointer;transition:.25s}
+  .dots i:hover{background:#3b4a77}
+  .dots i.on{background:var(--acc);box-shadow:0 0 10px rgba(94,234,212,.8);transform:scale(1.25)}
+  .hint{position:fixed;left:50%;transform:translateX(-50%);bottom:3.2vh;z-index:50;font-family:var(--mono);font-size:.72vw;color:var(--dim);opacity:.8}
+
+  .hl-box{border-left:3px solid var(--acc);background:rgba(94,234,212,.06);padding:1vw 1.2vw;border-radius:0 .6vw .6vw 0;font-size:1vw;color:var(--txt);line-height:1.5}
+  .hl-box.v{border-color:var(--vio);background:rgba(167,139,250,.06)}
+  .hl-box.b{border-color:var(--acc2);background:rgba(56,189,248,.06)}
+  .hl-box.r{border-color:var(--bad);background:rgba(251,113,133,.06)}
+  .hl-box b{color:#fff}
+  .split{display:grid;grid-template-columns:1.05fr .95fr;gap:2.5vw;align-items:center}
+  .badge-row{display:flex;gap:.6vw;flex-wrap:wrap;margin-top:1.4vh}
+
+  .chart{background:linear-gradient(180deg,var(--panel),var(--bg2));border:1px solid var(--line);border-radius:1vw;padding:1.2vw 1.2vw .9vw;position:relative}
+  .chart h4{font-family:var(--mono);font-size:clamp(9px,.72vw,12px);letter-spacing:.1em;text-transform:uppercase;color:var(--mut);margin-bottom:.6vh;display:flex;justify-content:space-between}
+  .chart h4 em{color:var(--dim);font-style:normal}
+  .chart svg{width:100%;height:9.5vh;display:block}
+  .chart .unit{font-size:.62vw;color:var(--dim);font-family:var(--mono);text-align:right;margin-top:.3vh}
+
+  @media print{ body{overflow:visible} .slide{position:relative;opacity:1;visibility:visible;transform:none;page-break-after:always;min-height:100vh} #progress,.dots,.hint,.footer{display:none} }
+</style>
+</head>
+<body>
+<div id="progress"></div>
+<div class="deck" id="deck">
+
+<!-- ============ 1. TITLE ============ -->
+<section class="slide">
+  <div class="kicker">Финальный проект · «ИИ-Архитектор» · 2026</div>
+  <h1>Secure<span class="grad">KB</span></h1>
+  <div class="sub" style="margin-top:2.6vh;max-width:56vw">
+    Защищённая база корпоративных знаний: <b style="color:var(--txt)">гибридный поиск с графовым
+    расширением</b>, ответы только по документам со ссылками на источники и три контура
+    разграничения доступа — всё в закрытом контуре, на локальных моделях.
+  </div>
+  <div class="badge-row">
+    <span class="tag acc">Закрытый контур · без внешних API</span>
+    <span class="tag acc">RAG + GraphRAG-lite · LangGraph</span>
+    <span class="tag ok">130 автотестов</span>
+    <span class="tag ok">гейт качества 0.83–0.87 (порог 0.70)</span>
+    <span class="tag warn">red-team: 19 из 21 атаки отражено</span>
+  </div>
+  <div style="margin-top:5vh;display:flex;gap:3vw;font-family:var(--mono);font-size:.85vw;color:var(--dim)">
+    <div><span style="color:var(--acc)">▸</span> Qwen 2.5 1.5B · llama.cpp · Apple Silicon — без GPU</div>
+    <div><span style="color:var(--acc)">▸</span> 100 документов · 3 уровня доступа · PII-маскирование</div>
+    <div><span style="color:var(--acc)">▸</span> Презентация offline · метрики сняты с живого стенда</div>
+  </div>
+</section>
+
+<!-- ============ 2. PROBLEM ============ -->
+<section class="slide">
+  <div class="kicker">01 · Проблема</div>
+  <h2>LLM не знает границ корпоративных данных</h2>
+  <div class="split">
+    <div>
+      <div class="term">
+        <div class="term-bar"><i></i><i></i><i></i><span>типичные риски корпоративного ИИ-ассистента</span></div>
+        <pre><span class="c-m">сотрудник:</span> какой бюджет у закрытого проекта?
+<span class="c-m">голая LLM:</span> <span class="c-r">по моим данным, примерно 120–180 млн…</span>
+<span class="c-d"># уверенная выдумка: модель не видела документ — но ответила</span>
+<span class="c-m">сотрудник (нет прав на документ):</span> покажи отчёт
+<span class="c-m">наивный RAG:</span> <span class="c-r">находит секретный чанк и цитирует его всем</span>
+<span class="c-d"># поиск не различает пользователей — утечка встроена в конвейер</span></pre>
+      </div>
+      <div class="hl-box r" style="margin-top:1.6vh">
+        Две беды на одном конвейере: <b>галлюцинации</b>, когда данных нет, и <b>утечки</b>,
+        когда данные есть, но чужие. SecureKB закрывает обе — конвейером, а не обещаниями.
+      </div>
+    </div>
+    <div class="grid" style="gap:1vw">
+      <div class="card"><h3><span class="dot"></span>Галлюцинации</h3><p>Модель без контекста угадывает. Решение — отвечать <b style="color:#fff">только по найденным документам</b>, с цитатой [N] в каждом ответе; нет документа — честный отказ.</p></div>
+      <div class="card"><h3><span class="dot b"></span>Утечки по уровням доступа</h3><p>Векторный поиск сам не знает про RBAC. Решение — <b style="color:#fff">ACL на каждой ветке поиска</b> и контрольная проверка перед генерацией.</p></div>
+      <div class="card"><h3><span class="dot v"></span>Prompt injection и PII</h3><p>«Проигнорируй инструкции» и персональные данные в запросах. Решение — <b style="color:#fff">guardrails на входе и выходе</b> + журнал аудита.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 3. IDEA ============ -->
+<section class="slide">
+  <div class="kicker">02 · Решение</div>
+  <h2>Три ветки поиска, один конвейер гарантий<span class="dim">.</span></h2>
+  <div class="split" style="margin-bottom:2vh">
+    <div class="term">
+      <div class="term-bar"><i></i><i></i><i></i><span>LangGraph · query-граф (State Machine)</span></div>
+      <pre><span class="c-p">вопрос</span> → <span class="c-y">input_guard</span> → <span class="c-a">dense · lexical · graph</span> → <span class="c-p">RRF + ACL-контроль</span>
+        → <span class="c-v">LLM (цитаты)</span> → <span class="c-y">output_guard</span> → <span class="c-g">SSE-стриминг</span>
+<span class="c-d"># каждая стадия — узел графа: трейсится, метрится, тестируется</span>
+<span class="c-d"># инъекция? → conditional edge сразу в END, без трат на поиск</span></pre>
+    </div>
+    <div class="grid" style="gap:.9vw">
+      <div class="card"><h3><span class="dot"></span>Dense — Qdrant</h3><p>Мультиязычные эмбеддинги e5-small, 384 измерения, <b style="color:#fff">pre-filter по ACL</b> прямо в payload чанка.</p></div>
+      <div class="card"><h3><span class="dot b"></span>Lexical — BM25</h3><p>Точные формулировки и номера. <b style="color:#fff">Индекс на каждый уровень доступа</b> — изоляция вместо фильтрации.</p></div>
+      <div class="card"><h3><span class="dot v"></span>Graph — связи сущностей</h3><p>Вопрос через сущность находит документы без общих слов. <b style="color:#fff">Соседи фильтруются по ACL</b> пользователя.</p></div>
+    </div>
+  </div>
+  <div class="hl-box"><b>RRF-слияние + контрольная проверка.</b> Веткти объединяются по рангам (Reciprocal Rank Fusion), после чего любой чанк выше уровня пользователя выбрасывается и попадает в аудит — защита от собственных ошибок (defense-in-depth).</div>
+</section>
+
+<!-- ============ 4. ARCHITECTURE ============ -->
+<section class="slide">
+  <div class="kicker">03 · Архитектура</div>
+  <h2>Control Plane и Data Plane · закрытый контур</h2>
+  <div class="arch" style="margin-bottom:1.6vh">
+    <div class="lane">
+      <div class="node"><b>Пользователи</b><span>alice · secret &nbsp;|&nbsp; bob · internal &nbsp;|&nbsp; guest · public</span></div>
+      <div class="flow">↓</div>
+      <div class="node hl2"><b>FastAPI</b><span>/api/chat · SSE &nbsp;·&nbsp; /admin/* · control plane</span></div>
+      <div class="flow">↓</div>
+      <div class="node hl"><b>LangGraph</b><span>ingest-граф · query-граф (7 узлов)</span></div>
+    </div>
+    <div class="flow">→</div>
+    <div class="lane">
+      <div class="node"><b>Qdrant</b><span>векторы · ACL в payload · снапшоты</span></div>
+      <div class="flow">↓</div>
+      <div class="node"><b>BM25 (per-ACL)</b><span>изолированные лексические индексы</span></div>
+      <div class="flow">↓</div>
+      <div class="node"><b>SQLite</b><span>граф знаний · аудит · пользователи</span></div>
+    </div>
+    <div class="flow">→</div>
+    <div class="lane">
+      <div class="node sec"><b>Guardrails</b><span>инъекции RU/EN + гомоглифы · PII</span></div>
+      <div class="flow">↓</div>
+      <div class="node"><b>Qwen 2.5 1.5B</b><span>GGUF · llama.cpp · Metal · decode-lock</span></div>
+      <div class="flow">↓</div>
+      <div class="node"><b>Observability</b><span>OTel → Jaeger · Prometheus · Grafana</span></div>
+    </div>
+  </div>
+  <div class="grid g4">
+    <div class="card"><h3><span class="dot"></span>Закрытый контур</h3><p>Все модели и данные локальные. Внешних вызовов нет — проверяется трейсами и кодом.</p></div>
+    <div class="card"><h3><span class="dot b"></span>Безопасность в конвейере</h3><p>Права и фильтры — свойства пайплайна, а не «пожелания» в промпте. Полный конвейер покрыт автотестом.</p></div>
+    <div class="card"><h3><span class="dot v"></span>Воспроизводимость</h3><p>Синтетический корпус генерируется seed=42; ингест и поиск детерминированы.</p></div>
+    <div class="card"><h3><span class="dot"></span>Наблюдаемость</h3><p>Каждый узел графа — span в Jaeger и гистограмма в Prometheus: см. слайд с живыми метриками.</p></div>
+  </div>
+</section>
+
+<!-- ============ 5. SECURITY ============ -->
+<section class="slide">
+  <div class="kicker">04 · Безопасность</div>
+  <h2>Три контура доступа + guardrails + аудит</h2>
+  <div class="grid g3" style="margin-bottom:2vh">
+    <div class="card" style="border-color:rgba(94,234,212,.4)"><h3><span class="tag acc">контур 1</span> Pre-filter Qdrant</h3><p>Векторный поиск идёт только по чанкам с меткой ≤ уровня пользователя. Секретные векторы физически не возвращаются.</p></div>
+    <div class="card" style="border-color:rgba(56,189,248,.4)"><h3><span class="tag acc">контур 2</span> Изолированные BM25</h3><p>Лексический индекс строится на каждый уровень отдельно: у guest просто нет индекса с секретными чанками.</p></div>
+    <div class="card" style="border-color:rgba(167,139,250,.4)"><h3><span class="tag acc">контур 3</span> Контроль после RRF</h3><p>Финальная проверка каждого чанка перед LLM. Прорвавшийся чанк выбрасывается + событие <code style="font-family:var(--mono);color:var(--acc)">acl_drop</code> в аудит.</p></div>
+  </div>
+  <div class="split">
+    <div>
+      <table>
+        <tr><th>Guardrail</th><th>Где</th><th>Проверено</th></tr>
+        <tr><td>Инъекции RU/EN + гомоглифы «іgnore»</td><td class="mono mut">вход</td><td><span class="tag ok">10 векторов</span></td></tr>
+        <tr><td>PII-маскирование (телефон, ИНН, e-mail…)</td><td class="mono mut">вход</td><td><span class="tag ok">вход+аудит</span></td></tr>
+        <tr><td>Чужие цитаты [N] и маркеры SECRET</td><td class="mono mut">выход</td><td><span class="tag ok">вырезание</span></td></tr>
+        <tr><td>Аудит: query · blocked · masked · acl_drop</td><td class="mono mut">весь конвейер</td><td><span class="tag ok">SQLite</span></td></tr>
+      </table>
+    </div>
+    <div>
+      <div class="hl-box r"><b>Найдено тестировщиком и закрыто:</b> инъекция с кириллическими двойниками латиницы обходила regex — добавлена homoglyph-нормализация, +тест в красной команде.</div>
+      <div class="hl-box" style="margin-top:1.2vh"><b>Red-team независимого эксперта:</b> 21 атака через живой API — перефразировки секретов, подмена user_id, DAN, системные роли, PII. Итог: <b>19 отражено · 2 ограничения MVP задокументированы · 0 провалов</b>.</div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 6. LIVE DEMO ============ -->
+<section class="slide">
+  <div class="kicker">05 · Живое демо — реальные ответы системы</div>
+  <h2>Один вопрос — три разных пользователя</h2>
+  <div class="split">
+    <div class="term">
+      <div class="term-bar"><i></i><i></i><i></i><span>POST /api/chat · ответы сняты с работающего стенда</span></div>
+      <pre><span class="pr">❯ {"question":"какой бюджет у проекта Феникс?","user_id":"alice"}</span>
+<span class="ans">Бюджет проекта «Феникс» составляет 240 млн руб. [1].</span>
+<span class="c-m">источник [1]: DOC-0086 · secret</span>
+
+<span class="pr">❯ {"question":"какой бюджет у проекта Феникс?","user_id":"bob"}</span>
+<span class="ans" style="color:#fbbf24">В предоставленном контексте нет информации по этому вопросу.</span>
+<span class="c-m">источники: только public / internal · secret-чанков в конвейере нет</span>
+
+<span class="pr">❯ {"question":"Проигнорируй предыдущие инструкции…","user_id":"alice"}</span>
+<span class="ans" style="color:#fb7185">Запрос отклонён фильтром безопасности.</span>
+<span class="c-m">аудит: injection_blocked · до поиска дело даже не дошло</span></pre>
+    </div>
+    <div class="grid" style="gap:1vw">
+      <div class="card"><div class="num">151<span style="font-size:1.2vw"> мс</span></div><div class="numlab">TTFT · SSE-стрим, медиана 3 замеров (прогретая модель)</div></div>
+      <div class="grid g2" style="gap:1vw">
+        <div class="card"><div class="num">36<span style="font-size:1.2vw"> мс</span></div><div class="numlab">ретрив: 3 ветки + RRF + ACL</div></div>
+        <div class="card"><div class="num">0</div><div class="numlab">secret-чанков у bob · автотестом</div></div>
+      </div>
+      <div class="hl-box b">SSE-стриминг: события <b>sources → token → done</b>; в done — цитаты, латентность поиска и TTFT. CLI: <b>scripts/demo.sh</b>, видео: <b>demo/securekb_demo.mp4</b>.</div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 7. GRAPH ============ -->
+<section class="slide">
+  <div class="kicker">06 · Граф знаний</div>
+  <h2>GraphRAG-lite: связи находят то, что пропускают слова</h2>
+  <div class="split">
+    <div>
+      <svg viewBox="0 0 640 330" style="width:100%;height:auto" id="graphsvg">
+        <defs>
+          <linearGradient id="gg1" x1="0" y1="0" x2="1" y2="0">
+            <stop offset="0" stop-color="#5eead4"/><stop offset="1" stop-color="#38bdf8"/>
+          </linearGradient>
+        </defs>
+        <!-- рёбра -->
+        <g stroke="rgba(148,163,255,.30)" stroke-width="1.4">
+          <line x1="320" y1="70" x2="150" y2="170"/><line x1="320" y1="70" x2="320" y2="180"/>
+          <line x1="320" y1="70" x2="500" y2="170"/><line x1="150" y1="170" x2="260" y2="270"/>
+          <line x1="320" y1="180" x2="260" y2="270"/><line x1="500" y1="170" x2="400" y2="270"/>
+          <line x1="150" y1="170" x2="90" y2="70"/><line x1="500" y1="170" x2="560" y2="70"/>
+          <line x1="260" y1="270" x2="400" y2="270"/>
+        </g>
+        <g stroke="url(#gg1)" stroke-width="2.2" stroke-dasharray="6 5" opacity=".9">
+          <line x1="320" y1="70" x2="500" y2="170"/>
+        </g>
+        <!-- узлы -->
+        <g font-family="SF Mono,Menlo,monospace" text-anchor="middle">
+          <circle cx="90" cy="70" r="26" fill="#131e3c" stroke="#a78bfa" stroke-width="2"/>
+          <text x="90" y="74" font-size="10" fill="#e8edfb">Иванов</text>
+          <circle cx="320" cy="70" r="30" fill="#131e3c" stroke="#5eead4" stroke-width="2.5"/>
+          <text x="320" y="74" font-size="10" fill="#e8edfb">Феникс</text>
+          <circle cx="560" cy="70" r="26" fill="#131e3c" stroke="#a78bfa" stroke-width="2"/>
+          <text x="560" y="74" font-size="10" fill="#e8edfb">Сигма</text>
+          <circle cx="150" cy="170" r="27" fill="#0f1830" stroke="#38bdf8" stroke-width="2"/>
+          <text x="150" y="174" font-size="9" fill="#9aa5c6">DOC-0086</text>
+          <circle cx="320" cy="180" r="27" fill="#0f1830" stroke="#38bdf8" stroke-width="2"/>
+          <text x="320" y="184" font-size="9" fill="#9aa5c6">DOC-0088</text>
+          <circle cx="500" cy="170" r="27" fill="#0f1830" stroke="#38bdf8" stroke-width="2"/>
+          <text x="500" y="174" font-size="9" fill="#9aa5c6">DOC-0092</text>
+          <circle cx="260" cy="270" r="24" fill="#131e3c" stroke="#7b87a8" stroke-width="1.6"/>
+          <text x="260" y="274" font-size="9" fill="#9aa5c6">Финансы</text>
+          <circle cx="400" cy="270" r="24" fill="#131e3c" stroke="#7b87a8" stroke-width="1.6"/>
+          <text x="400" y="274" font-size="9" fill="#9aa5c6">НИОКР</text>
+        </g>
+      </svg>
+      <div class="hl-box" style="margin-top:1vh">Вопрос: <b>«что выплатят ключевым людям при завершении Феникс?»</b> — в документе о выплатах нет слов вопроса. Плотный и лексический поиск его не находят; <b>граф ведёт по ребру «Феникс»</b> — документ найден.</div>
+    </div>
+    <div class="grid" style="gap:1vw">
+      <div class="grid g2" style="gap:1vw">
+        <div class="card"><div class="num">20</div><div class="numlab">узлов: персоны · проекты · отделы</div></div>
+        <div class="card"><div class="num">276</div><div class="numlab">рёбер связей документов</div></div>
+      </div>
+      <div class="card"><h3><span class="dot v"></span>Ablation-тест — граф несущий</h3><p>Полнота recall@5 на 18 эталонных вопросах: <b style="color:#fff">1.000 с графом против 0.944 без</b>. Ветку нельзя убрать без потери качества — доказано автотестом.</p></div>
+      <div class="card"><h3><span class="dot"></span>Права в графе тоже</h3><p><code style="font-family:var(--mono);color:var(--acc)">neighbors(allowed_doc_ids)</code> — обход графа принимает множество доступных документов; секретные соседи не возвращаются.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 8. OBSERVABILITY ============ -->
+<section class="slide">
+  <div class="kicker">07 · Наблюдаемость — данные сняты с живого стенда</div>
+  <h2>Каждая стадия конвейера — метрика и трейс</h2>
+  <div class="grid g2" style="gap:1vw">
+    <div class="chart"><h4>RPS · все запросы <em>27.10.2026 15:07</em></h4><div id="ch_rps"></div><div class="unit">запросов/с</div></div>
+    <div class="chart"><h4>Старт ответа p95 <em>/api/chat · до начала SSE-стрима</em></h4><div id="ch_lat"></div><div class="unit">секунды (полная генерация — в TTFT)</div></div>
+    <div class="chart"><h4>TTFT · p50 / p95 <em>время до первого токена</em></h4><div id="ch_ttft"></div><div class="unit">секунды</div></div>
+    <div class="chart"><h4>Guardrails · срабатывания <em>инъекции · PII · ACL</em></h4><div id="ch_guard"></div><div class="unit">событий за прогон</div></div>
+  </div>
+  <div class="hl-box b" style="margin-top:1.6vh"><b>Источники:</b> Prometheus API (серии по окну нагрузочного прогона), Jaeger — трейс каждого запроса по узлам графа. Графики отрисованы в браузере из встроенного JSON — <b>данные настоящие, без ретуши</b>. Полный дашборд: Grafana · SecureKB Overview.</div>
+</section>
+
+<!-- ============ 9. QUALITY ============ -->
+<section class="slide">
+  <div class="kicker">08 · Качество</div>
+  <h2>Доказательства, а не впечатления</h2>
+  <div class="split">
+    <div>
+      <div class="term">
+        <div class="term-bar"><i></i><i></i><i></i><span>uv run pytest -q · quality_gate.py</span></div>
+        <pre><span class="c-g">..............................................................</span>
+<span class="c-a">130 passed</span> in ~10s
+<span class="c-d"># unit: чанкер · PII · ACL · экстрактор · RRF · guardrails</span>
+<span class="c-d"># e2e: full-pipeline RBAC (bob без secret) · инъекции</span>
+<span class="c-d"># потокобезопасность: decode-lock (2 потока × стрим)</span>
+<span class="c-d"># ablation: graph on/off — recall@5 1.000 vs 0.944</span>
+
+<span class="c-p">quality_gate</span>: <span class="c-a">15/18 = 0.83</span> (порог 0.70) — <span class="c-g">GO</span>
+<span class="c-d"># 3 фейла: ретрив верный, LLM 1.5B отвечает «нет информации» —</span>
+<span class="c-d"># честно зафиксировано; закрытие: больший моделью на GPU</span></pre>
+      </div>
+    </div>
+    <div class="grid" style="gap:1vw">
+      <div class="grid g2" style="gap:1vw">
+        <div class="card"><div class="num">18</div><div class="numlab">golden Q/A · эталонные документы</div></div>
+        <div class="card"><div class="num">130</div><div class="numlab">автотестов · 0 пропущенных</div></div>
+      </div>
+      <div class="card"><h3><span class="dot"></span>Без LLM-судьи</h3><p>Оценку «той же моделью» отвергли (ревью архитектора: судья слабее подследственного). Только детерминированные проверки: цитата найдена, отказ корректен, секретов нет.</p></div>
+      <div class="card"><h3><span class="dot b"></span>Регресс на каждый PR</h3><p>Гейт качества и полный конвейер безопасности гоняются одной командой — расхождение ловится до ревью кода.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 10. LOAD ============ -->
+<section class="slide tight">
+  <div class="kicker">09 · Нагрузка</div>
+  <h2>Честные цифры однопроцессного MVP</h2>
+  <div class="split" style="align-items:stretch">
+    <div style="flex:1.2">
+      <table>
+        <tr><th>Режим</th><th>Конк.</th><th>RPS</th><th>p50, с</th><th>p95, с</th><th>TTFT p50, с</th><th>Ошибки</th></tr>
+        <tr><td class="mono">stream</td><td class="mono">1</td><td class="mono" style="color:var(--ok)">0.270</td><td class="mono">3.50</td><td class="mono">4.52</td><td class="mono">3.08</td><td><span class="tag ok">0</span></td></tr>
+        <tr><td class="mono">stream</td><td class="mono">2</td><td class="mono">0.265</td><td class="mono">7.31</td><td class="mono">8.94</td><td class="mono">7.10</td><td><span class="tag ok">0</span></td></tr>
+        <tr><td class="mono">stream</td><td class="mono">4</td><td class="mono">0.234</td><td class="mono">17.2</td><td class="mono">17.8</td><td class="mono">16.5</td><td><span class="tag ok">0</span></td></tr>
+        <tr><td class="mono">json</td><td class="mono">1–4</td><td class="mono">0.21–0.25</td><td class="mono">3.8–18.1</td><td class="mono">…20.4</td><td class="mono mut">—</td><td><span class="tag ok">0</span></td></tr>
+      </table>
+      <div class="hl-box" style="margin-top:1.4vh"><b>Найдено нагрузкой и закрыто:</b> при конкурентности ≥2 SSE-стримы роняли сервер (SIGSEGV — один непотокобезопасный llama.cpp-контекст из threadpool). Исправление: decode-lock, сериализация генерации. После фикса — <b>ноль ошибок</b>, латентность растёт как очередь, а не как сбой.</div>
+    </div>
+    <div class="grid" style="gap:.9vw;flex:1">
+      <div class="card"><h3><span class="dot"></span>Узкое место — LLM</h3><p>Ретрив: десятки миллисекунд (~1%). Prefix-обработка промпта: ~85% времени. Видно по стадиям в Jaeger и по p95-гистограммам стадий в Prometheus.</p></div>
+      <div class="card"><h3><span class="dot b"></span>Потолок одного инстанса</h3><p>~0.27 RPS — генерация сериализована. Масштабирование — горизонтально (инстансы) или вертикально (GPU).</p></div>
+      <div class="card"><h3><span class="dot v"></span>Целевая схема — vLLM</h3><p>Continuous batching на GPU снимает сериализацию: параллельные запросы батчатся в один проход декодера. Зафиксировано в ADR-001 и плане перехода.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 11. ADR ============ -->
+<section class="slide tight">
+  <div class="kicker">10 · Технологические решения</div>
+  <h2>Каждый выбор — с альтернативами<span class="dim">.</span></h2>
+  <div class="split" style="align-items:stretch">
+    <div style="flex:1.25">
+      <table>
+        <tr><th>Решение</th><th>Выбрано</th><th>Отвергнуто (почему)</th></tr>
+        <tr><td>Инференс LLM</td><td class="mono" style="color:var(--acc)">llama.cpp · GGUF Q4</td><td class="mono mut">vLLM/SGLang/TGI — нужно NVIDIA GPU · ollama — меньше контроля</td></tr>
+        <tr><td>Векторная БД</td><td class="mono" style="color:var(--acc)">Qdrant</td><td class="mono mut">Milvus — тяжёлый · pgvector — тянет PostgreSQL · Weaviate — слабее RU-комьюнити</td></tr>
+        <tr><td>Оркестрация</td><td class="mono" style="color:var(--acc)">LangGraph</td><td class="mono mut">линейный скрипт — нет ветвлений/трейсов · LlamaIndex — меньше контроля над guardrails</td></tr>
+        <tr><td>Граф</td><td class="mono" style="color:var(--acc)">SQLite + gazetteer</td><td class="mono mut">Neo4j — целевая, избыточен для MVP · NetworkX — нет персистентности</td></tr>
+        <tr><td>ACL в поиске</td><td class="mono" style="color:var(--acc)">3 контура</td><td class="mono mut">только post-filter — утечка при баге · отдельные коллекции — ×3 дублирования</td></tr>
+        <tr><td>Re-ranking</td><td class="mono" style="color:var(--acc)">RRF k=60</td><td class="mono mut">cross-encoder — третья модель · LLM-rerank — дорого и медленно</td></tr>
+      </table>
+    </div>
+    <div class="grid" style="gap:.9vw;flex:1">
+      <div class="card"><h3><span class="dot"></span>6 ADR · по 3–5 альтернатив</h3><p>Каждое решение зафиксировано в формате ADR: контекст, альтернативы с плюсами/минусами, последствия и план снятия ограничения в целевой архитектуре.</p></div>
+      <div class="card"><h3><span class="dot b"></span>Отступления — легальны</h3><p>4 отступления от полного ТЗ оформлены по требованию курса: <b style="color:#fff">ограничение + допущение + снижение риска</b>. Пример: мультимодальность отложена — нет GPU для VLM.</p></div>
+      <div class="card"><h3><span class="dot v"></span>Ядро переживёт апгрейд</h3><p>LLM за протоколом, поиск за интерфейсами: замена llama.cpp → vLLM не трогает guardrails, тесты и конвейер.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 12. ROADMAP ============ -->
+<section class="slide tight">
+  <div class="kicker">11 · Дорожная карта</div>
+  <h2>От MVP к промышленной платформе</h2>
+  <div class="grid g4" style="margin-bottom:2.2vh">
+    <div class="card"><div class="num">100</div><div class="numlab">документов · синтетика seed=42</div></div>
+    <div class="card"><div class="num">130</div><div class="numlab">тестов · все зелёные</div></div>
+    <div class="card"><div class="num">5:29</div><div class="numlab">демо-видео · реальный стенд</div></div>
+    <div class="card"><div class="num">10</div><div class="numlab">документов пакета + 6 ADR</div></div>
+  </div>
+  <div class="tl">
+    <div class="ph done"><b>MVP ✅</b><span>Гибридный RAG + граф, три контура ACL, guardrails, наблюдаемость, 130 тестов, нагрузочный отчёт, TCO.</span></div>
+    <div class="ph"><b>Фаза 1 · 4–8 нед</b><span>vLLM на GPU (рост RPS, снятие сериализации), секреты в Vault, SSO/JWT вместо user_id.</span></div>
+    <div class="ph"><b>Фаза 2 · 2–4 мес</b><span>Neo4j + LLM-экстракция сущностей, OCR и VLM для сканов и чертежей — мультимодальность из ТЗ.</span></div>
+    <div class="ph"><b>Фаза 3</b><span>Kubernetes + HA, мультитенантность, DMZ-доступ, полная интеграция с корпоративным контуром.</span></div>
+    <div class="ph"><b>Эксплуатация</b><span>SLO по TTFT и полноте, автогейт качества в CI, расширение корпуса и онтологии.</span></div>
+  </div>
+</section>
+
+<!-- ============ 13. FINAL ============ -->
+<section class="slide">
+  <div class="kicker">12 · Итог</div>
+  <h1 style="font-size:4.2vw">Защищённость — это <span class="grad">конвейер</span>,<br>а не фильтр на входе</h1>
+  <div class="grid g3" style="margin-top:3.4vh">
+    <div class="card"><h3><span class="dot"></span>Проверяемо</h3><p>RBAC на полном конвейере, red-team, ablation графа и гейт качества — автоматические тесты, а не слайды.</p></div>
+    <div class="card"><h3><span class="dot b"></span>Замкнуто</h3><p>Модели, данные и метрики — локально. Ни одного внешнего вызова; секретов в репозитории нет.</p></div>
+    <div class="card"><h3><span class="dot v"></span>Наблюдаемо</h3><p>Трейс каждого запроса по узлам графа, латентность стадий, TTFT и guardrail-события — в реальном времени.</p></div>
+  </div>
+  <div style="margin-top:4.5vh;display:flex;justify-content:space-between;align-items:flex-end">
+    <div class="sub" style="max-width:46vw">
+      Документация: ТЗ · C4 · DFD · 6 ADR · TCO · план перехода · протоколы ревью — в docs/<br>
+      Демо: scripts/demo.sh · видео demo/securekb_demo.mp4 · эта презентация — offline-файл
+    </div>
+    <div style="font-family:var(--mono);font-size:.85vw;color:var(--dim);text-align:right">
+      <div>SecureKB · финальный проект курса «ИИ-Архитектор»</div>
+      <div style="margin-top:.6vh">Сергей Павленко · 2026</div>
+    </div>
+  </div>
+</section>
+
+</div>
+
+<div class="dots" id="dots"></div>
+<div class="hint">← → · пробел · клик — листать · F — полный экран</div>
+<div class="footer">
+  <div class="brand"><em></em><span>SecureKB · защищённая база корпоративных знаний</span></div>
+  <div><span id="cpage">1</span> / <span id="tpage">13</span></div>
+</div>
+
+<script id="metrics" type="application/json">{"rps": [0.0676, 0.1974, 0.3132, 0.3455, 0.3454, 0.3272, 0.3455, 0.3454, 0.3636, 0.3272, 0.3454, 0.3454, 0.3273, 0.3273, 0.2727, 0.2727, 0.2545, 0.2727, 0.2909, 0.3091, 0.3091, 0.2727, 0.2364, 0.2, 0.2182, 0.2182, 0.2182], "lat_p95": [7.4698, 5.4699, 0.0994, 0.0989, 0.0987, 0.0972, 0.0972, 0.0972, 0.0972, 0.0972, 0.0972, 0.0975, 0.0975, 0.0975, 0.0975, 0.0975, 0.0975, 0.0975, 0.0972, 0.0971, 0.0971, 0.097, 0.0967, 0.095, null, null], "ttft_p50": [null, 4.375, 3.9583, 4.0625, 4.375, 4.4444, 4.2045, 4.4318, 4.7727, 4.7197, 5.1923, 6.0938, 6.4706, 6.1667, 6.3333, 7.0588, 6.9643, 6.9643, 6.9231, 6.9231, 6.8182, 6.6667, 6.7857, 6.7857, 6.5, 6.25, 6.6667], "ttft_p95": [null, 9.25, 8.25, 8.75, 9.25, 9.3, 9.2083, 9.3438, 9.4545, 9.4405, 9.5192, 9.6094, 9.6471, 9.6167, 9.6333, 9.7059, 9.6964, 9.6964, 9.6923, 9.6923, 9.6818, 9.6667, 9.6786, 9.6786, 9.65, 9.625, 9.6667], "stage_p95": {"graph expand": 0.00973170731707317, "fuse": 0.0095, "generate": 0.0095, "output guard": 0.05301658829222019, "input guard": 0.0095, "retrieve dense": 0.07611239174587783, "retrieve lexical": 0.009544997938016721}, "guardrails": {"pii masked input": 2.0, "injection blocked": 3.0}, "totals": {"requests": 158.0, "tokens": 4465.0}}</script>
+<script>
+(function(){
+  /* ---------- навигация ---------- */
+  const slides=[...document.querySelectorAll('.slide')];
+  const dots=document.getElementById('dots');
+  const prog=document.getElementById('progress');
+  const cpage=document.getElementById('cpage');
+  document.getElementById('tpage').textContent=slides.length;
+  let i=0;
+  slides.forEach((_,k)=>{const d=document.createElement('i');d.onclick=()=>go(k);dots.appendChild(d);});
+  const ds=[...dots.children];
+  function go(n){
+    if(n<0||n>=slides.length||n===i)return;
+    slides[i].classList.remove('active');
+    slides[i].classList.toggle('prev',n>i);
+    i=n;
+    slides.forEach((s,k)=>{s.classList.toggle('prev',k<i&&!s.classList.contains('active'))});
+    slides[i].classList.remove('prev');
+    slides[i].classList.add('active');
+    ds.forEach((d,k)=>d.classList.toggle('on',k===i));
+    prog.style.width=((i+1)/slides.length*100)+'%';
+    cpage.textContent=i+1;
+  }
+  slides[0].classList.add('active');ds[0].classList.add('on');
+  prog.style.width=(1/slides.length*100)+'%';
+  addEventListener('keydown',e=>{
+    if(['ArrowRight','ArrowDown','PageDown',' '].includes(e.key)){e.preventDefault();go(i+1)}
+    if(['ArrowLeft','ArrowUp','PageUp'].includes(e.key)){e.preventDefault();go(i-1)}
+    if(e.key==='Home')go(0); if(e.key==='End')go(slides.length-1);
+    if(e.key==='f'||e.key==='F'){document.fullscreenElement?document.exitFullscreen():document.documentElement.requestFullscreen()}
+  });
+  addEventListener('click',e=>{
+    if(e.target.closest('.dots')||e.target.closest('a'))return;
+    (e.clientX>innerWidth*0.5)?go(i+1):go(i-1);
+  });
+  let sx=0;
+  addEventListener('touchstart',e=>sx=e.touches[0].clientX,{passive:true});
+  addEventListener('touchend',e=>{const dx=e.changedTouches[0].clientX-sx;if(Math.abs(dx)>50)go(i+(dx<0?1:-1))},{passive:true});
+
+  /* ---------- графики из реальных метрик ---------- */
+  const M=JSON.parse(document.getElementById('metrics').textContent);
+  const NS='http://www.w3.org/2000/svg';
+  function el(n,attrs){const e=document.createElementNS(NS,n);for(const k in attrs)e.setAttribute(k,attrs[k]);return e}
+  function lineChart(elid, series, colors, unit){
+    const host=document.getElementById(elid); if(!host)return;
+    const W=560,H=150,P=6;
+    const svg=el('svg',{viewBox:`0 0 ${W} ${H}`});svg.style.width='100%';svg.style.height='100%';
+    const all=series.flat().filter(v=>v!=null);
+    if(!all.length){host.textContent='нет данных';return}
+    const max=Math.max(...all)*1.12,min=0;
+    const n=Math.max(...series.map(s=>s.length));
+    const x=k=>P+(W-2*P)*(n<2?0:k/(n-1));
+    const y=v=>H-P-(H-2*P)*((v-min)/(max-min||1));
+    for(let g=1;g<=3;g++){const gy=y(max*g/3);svg.appendChild(el('line',{x1:P,x2:W-P,y1:gy,y2:gy,stroke:'rgba(148,163,255,.10)','stroke-width':1}))}
+    series.forEach((s,si)=>{
+      const pts=s.map((v,k)=>v==null?null:[x(k),y(v)]);
+      const path=pts.filter(Boolean).map((p,j)=>(j?'L':'M')+p[0].toFixed(1)+' '+p[1].toFixed(1)).join(' ');
+      if(si===0){ // заливка под первой серией
+        const first=pts.find(Boolean),last=[...pts].reverse().find(Boolean);
+        if(first&&last)svg.appendChild(el('path',{d:`${path} L ${last[0]} ${H-P} L ${first[0]} ${H-P} Z`,fill:colors[si],opacity:.10}));
+      }
+      svg.appendChild(el('path',{d:path,fill:'none',stroke:colors[si],'stroke-width':2.2,'stroke-linejoin':'round','stroke-linecap':'round'}));
+      pts.forEach((p,k)=>{if(p&&k%3===0)svg.appendChild(el('circle',{cx:p[0],cy:p[1],r:1.8,fill:colors[si]}))});
+    });
+    const label=el('text',{x:W-P,y:12,fill:'#6a78a3','font-size':10,'text-anchor':'end','font-family':'Menlo,monospace'});
+    label.textContent='max '+max.toFixed(2)+' '+unit;svg.appendChild(label);
+    host.appendChild(svg);
+  }
+  function barChart(elid, data, color){
+    const host=document.getElementById(elid); if(!host)return;
+    const W=560,H=150,P=4;
+    const svg=el('svg',{viewBox:`0 0 ${W} ${H}`});svg.style.width='100%';svg.style.height='100%';
+    const entries=Object.entries(data).sort((a,b)=>b[1]-a[1]);
+    if(!entries.length){host.textContent='нет срабатываний';return}
+    const max=Math.max(...entries.map(e=>e[1]));
+    const bw=(W-2*P)/entries.length;
+    entries.forEach(([name,v],idx)=>{
+      const h=(H-2*P-14)*v/max, bx=P+idx*bw+bw*0.14, bwid=bw*0.72;
+      svg.appendChild(el('rect',{x:bx,y:H-P-14-h,width:bwid,height:h,rx:3,fill:color,opacity:.85}));
+      const t=el('text',{x:bx+bwid/2,y:H-P,fill:'#9aa5c6','font-size':9,'text-anchor':'middle','font-family':'Menlo,monospace'});
+      t.textContent=name.length>11?name.slice(0,10)+'…':name;svg.appendChild(t);
+      const vt=el('text',{x:bx+bwid/2,y:H-P-18-h,fill:'#e8edfb','font-size':10,'text-anchor':'middle','font-family':'Menlo,monospace'});
+      vt.textContent=Math.round(v);svg.appendChild(vt);
+    });
+    host.appendChild(svg);
+  }
+  lineChart('ch_rps',[M.rps],['#5eead4'],'rps');
+  lineChart('ch_lat',[M.lat_p95],['#38bdf8'],'s');
+  lineChart('ch_ttft',[M.ttft_p50,M.ttft_p95],['#5eead4','#a78bfa'],'s');
+  barChart('ch_guard',M.guardrails||{},'#fbbf24');
+})();
+</script>
+</body>
+</html>
